@@ -12,6 +12,7 @@ import { sql } from '@codemirror/lang-sql'
 import { xml } from '@codemirror/lang-xml'
 import { java } from '@codemirror/lang-java'
 import { cpp } from '@codemirror/lang-cpp'
+import { csharp } from '@replit/codemirror-lang-csharp'
 import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr'
 import type { Extension } from '@codemirror/state'
 
@@ -26,6 +27,7 @@ const LANGUAGES: Record<string, { label: string; ext: () => Extension }> = {
   xml: { label: 'XML', ext: xml },
   java: { label: 'Java', ext: java },
   cpp: { label: 'C/C++', ext: cpp },
+  csharp: { label: 'C#', ext: csharp },
   plaintext: { label: 'Text', ext: () => [] as unknown as Extension },
 }
 
