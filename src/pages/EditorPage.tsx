@@ -13,6 +13,8 @@ import { xml } from '@codemirror/lang-xml'
 import { java } from '@codemirror/lang-java'
 import { cpp } from '@codemirror/lang-cpp'
 import { csharp } from '@replit/codemirror-lang-csharp'
+import { StreamLanguage } from '@codemirror/language'
+import { powerShell } from '@codemirror/legacy-modes/mode/powershell'
 import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr'
 import type { Extension } from '@codemirror/state'
 
@@ -28,6 +30,7 @@ const LANGUAGES: Record<string, { label: string; ext: () => Extension }> = {
   java: { label: 'Java', ext: java },
   cpp: { label: 'C/C++', ext: cpp },
   csharp: { label: 'C#', ext: csharp },
+  powershell: { label: 'PowerShell', ext: () => StreamLanguage.define(powerShell) },
   plaintext: { label: 'Text', ext: () => [] as unknown as Extension },
 }
 
@@ -128,7 +131,13 @@ export default function EditorPage() {
   }
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(window.location.href)
+    const url = window.location.href
+    // Convert punycode hostname to unicode for readability
+    const readable = url.replace(
+      /xn--80aa1c4a\.xn--80acvhc0c\.xn--p1ai/g,
+      'шара.лабкит.рф'
+    )
+    navigator.clipboard.writeText(readable)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
