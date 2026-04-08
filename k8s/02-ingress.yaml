@@ -1,0 +1,63 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: labkit-share-redirect
+  namespace: labkit
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: labkit-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: xn--80aa1c4a.xn--80acvhc0c.xn--p1ai
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: labkit-share
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: labkit-share
+  namespace: labkit
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - xn--80aa1c4a.xn--80acvhc0c.xn--p1ai
+      secretName: labkit-share-tls
+  rules:
+    - host: xn--80aa1c4a.xn--80acvhc0c.xn--p1ai
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: labkit-share-api
+                port:
+                  number: 80
+          - path: /hubs
+            pathType: Prefix
+            backend:
+              service:
+                name: labkit-share-api
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: labkit-share
+                port:
+                  number: 80

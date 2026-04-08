@@ -1,0 +1,57 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload source to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: ~/labkit-share/src
+          rm: true
+          overwrite: true
+
+      - name: Build and deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          script: |
+            set -e
+            cd ~/labkit-share/src
+
+            echo "=== Building frontend ==="
+            sudo docker build -t labkit-share:latest .
+
+            echo "=== Building backend ==="
+            sudo docker build -t labkit-share-api:latest ./backend
+
+            echo "=== Importing images to k3s ==="
+            sudo docker save labkit-share:latest | sudo k3s ctr images import -
+            sudo docker save labkit-share-api:latest | sudo k3s ctr images import -
+
+            echo "=== Applying manifests ==="
+            sudo kubectl apply -f k8s/
+
+            echo "=== Restarting deployments ==="
+            sudo kubectl rollout restart deployment/labkit-share -n labkit
+            sudo kubectl rollout restart deployment/labkit-share-api -n labkit
+
+            echo "=== Waiting for rollout ==="
+            sudo kubectl rollout status deployment/labkit-share -n labkit --timeout=120s
+            sudo kubectl rollout status deployment/labkit-share-api -n labkit --timeout=120s
+
+            echo "=== Deploy complete ==="
